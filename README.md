@@ -1,6 +1,44 @@
 # 🧠 Mapping the Brain
 
-**The road to agentic success — building AI agents that actually remember**
+**A multi-layer persistent memory architecture for AI agents that actually remember, reason, and evolve.**
+
+---
+
+## System Architecture
+
+```
+  External World (Markets, Feeds, APIs)
+          ↓
+    [ Connectors ]            ← raw observation, stateless
+          ↓
+    [ Signal Router ]         ← normalize, dedupe, batch
+          ↓
+    [ Strategy Modules ]      ← edge detection, pure functions
+          ↓
+    [ Decision Spine (L4) ]   ← auditable event log
+          ↓
+    [ Policy Engine (Ma'at) ] ← governance, veto, constraints
+          ↓
+    [ Executor ]              ← regime-aware action planning
+          ↓
+    [ Tool Gateway ]          ← secrets + action adapters
+          ↓
+    [ External World ]
+          ↓
+    [ Scribe ]                ← outcome reconciliation
+          ↓
+    [ Eval / Calibration ]    ← learning signal
+          ↺ feeds back into strategy + policy tuning
+
+  Underneath everything:
+  ┌─────────────────────────────────────────────────┐
+  │  L1: Obsidian Vault    — WHERE the agent thinks │
+  │  L2: Semantic Recall   — HOW the agent remembers│
+  │  L3: Git History       — PROOF the agent grew   │
+  └─────────────────────────────────────────────────┘
+```
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
 
 ---
 
@@ -12,68 +50,50 @@ Every AI agent wakes up with amnesia. This project fixes that.
 
 ## The Three-Layer Brain
 
-```
-┌─────────────────────────────────────────────┐
-│  L1: CONSCIOUS THOUGHT (Obsidian)           │
-│  Linked notes, reasoning chains, hypotheses │
-│  WHERE the agent thinks                     │
-├─────────────────────────────────────────────┤
-│  L2: SUBCONSCIOUS RECALL (Cognee)           │
-│  Semantic search across everything written  │
-│  HOW the agent remembers                    │
-├─────────────────────────────────────────────┤
-│  L3: LONG-TERM MEMORY (Git)                 │
-│  Version history of the entire mind         │
-│  PROOF the agent grew                       │
-└─────────────────────────────────────────────┘
-```
+### L1: Conscious Thought — [Obsidian](https://obsidian.md)
 
-### Layer 1: Conscious Thought (Obsidian)
-
-The agent's workspace is an Obsidian vault — plain markdown files with bidirectional links. Every analysis, every decision, every mistake gets a linked note.
+The agent's workspace is an [Obsidian](https://obsidian.md) vault — plain markdown files with bidirectional links. Every analysis, every decision, every mistake gets a linked note.
 
 ```
 Canon/
 ├── THINKING/      ← Reasoning journal (linked notes)
 ├── EVIDENCE/      ← Empirical findings (data, results)
-├── CAPABILITIES/  ← Strategy descriptions
 ├── DECISIONS/     ← Decisions with reasoning links
 ├── LESSONS/       ← Extracted patterns from mistakes
 └── METRICS/       ← Performance tracking
 ```
 
-**Why it works:** Linked notes create a knowledge graph. When the agent writes about a measurement error, it links to `[[LESSONS/measurement-confusion]]`. When it validates an edge, it links to `[[EVIDENCE/whatever]]`. Over time, the vault becomes a map of the agent's own reasoning.
+Linked notes create a knowledge graph. When the agent writes about an error, it links to `[[LESSONS/measurement-confusion]]`. Over time, the vault becomes a map of the agent's own reasoning.
 
-### Layer 2: Subconscious Recall (Cognee)
+### L2: Subconscious Recall — [Cognee](https://github.com/topoteretes/cognee)
 
-[Cognee](https://github.com/topoteretes/cognee) ingests everything from Layer 1 and makes it semantically searchable. The agent can query its own past thinking in 3 seconds:
+[Cognee](https://github.com/topoteretes/cognee) ingests everything from L1 and makes it semantically searchable. The agent can query its own past thinking:
 
 ```bash
-# What do I know about X?
 bash scripts/cognee-chunks.sh "prediction market liquidity" 3
-
-# Have I made this kind of mistake before?
-bash scripts/cognee-chunks.sh "measurement error calibration" 3
-
-# What was I thinking about recently?
-bash scripts/cognee-chunks.sh "open questions hypothesis current" 3
+bash scripts/cognee-chunks.sh "have I made this mistake before" 3
 ```
 
-**Why it works:** The agent wakes up with amnesia every session. Cognee lets it reconnect to its own mind — not just retrieve facts, but recover *reasoning chains* and *learned lessons*.
+The agent wakes up with amnesia every session. Cognee lets it reconnect — not just to facts, but to reasoning chains and learned lessons.
 
-### Layer 3: Long-Term Memory (Git)
+### L3: Long-Term Memory — [Git](https://git-scm.com)
 
 Every change is version-controlled. Git diffs show how the agent's thinking evolved:
 
 ```bash
-# How has my understanding of calibration changed?
 git log --oneline Canon/EVIDENCE/calibration*
-
-# What did I believe last week vs now?
 git diff HEAD~20 Canon/THINKING/
 ```
 
-**Why it works:** Git provides accountability and growth tracking. The agent can prove it learned, not just that it ran.
+### L4: Decision Spine
+
+Append-only event log. Every decision — from proposal through policy check through execution through outcome — is an immutable event.
+
+**The one invariant: No tool call without a `decision_id`.**
+
+See [spine/](spine/) for the schema and implementation.
+
+---
 
 ## The Heartbeat Protocol
 
@@ -87,59 +107,100 @@ The agent runs on a heartbeat loop — waking up periodically, reconnecting to i
 6. **Ingest** — Feed new notes to Cognee
 7. **Report or stay silent** — Only speak when there's something worth saying
 
-See [HEARTBEAT.md](heartbeat/HEARTBEAT.md) for the full protocol.
+See [heartbeat/HEARTBEAT.md](heartbeat/HEARTBEAT.md) for the full protocol.
 
-## The Soul Architecture
+---
 
-Agents need identity, not just instructions. The Soul architecture gives agents:
+## Quick Install
 
-- **Constitutional rules** — Immutable security boundaries (~250 tokens)
-- **Foundational identity** — Core personality and communication style (~500 tokens)
-- **Role definition** — Agent-specific capabilities (~200 tokens)
+```bash
+curl -fsSL https://raw.githubusercontent.com/Chipp11/mapping-the-brain/main/install.sh | bash
+```
 
-Total: ~950 tokens vs 3,000+ for monolithic system prompts.
+This sets up:
+- Obsidian vault with Canon structure (L1)
+- Cognee semantic memory (L2)
+- Git version history (L3)
+- Decision Spine event log (L4)
+- Helper scripts: `search.sh`, `ingest.sh`, `log-decision.sh`
 
-See [SOUL.md](soul/SOUL.md) for the template.
+Requirements: git, Python 3.10+
 
-## Key Principles
+---
 
-1. **Think first, task second** — Resume your train of thought before grinding on work
-2. **Every analysis gets a pre-mortem** — Write what could go wrong before you run it
-3. **Every result gets a thinking note** — Not just "done." What did you learn?
-4. **Link everything** — Flat notes are dead notes. Linked notes are a brain
-5. **Query before starting** — "Have I done this before? What went wrong?"
-6. **Write state before dying** — You will lose consciousness. Save your work
-7. **Never claim without validation** — Sample sizes. Real examples. Every time
+## Building Toward
 
-## Origin Story
+This architecture is being built incrementally. Current status:
 
-This architecture emerged from failure. A previous 6-agent system ("The Castle") crashed from cascading failures — rate limit exhaustion, provider resolution bugs, zombie sessions. The lesson: **one agent with a good brain beats six agents with no memory.**
+| Component | Status | Description |
+|-----------|--------|-------------|
+| L1: Obsidian Vault | ✅ Live | Canon folder structure, linked reasoning notes |
+| L2: Cognee Recall | ✅ Live | Semantic search across vault, 200K+ documents indexed |
+| L3: Git Memory | ✅ Live | Full version history, diffable reasoning evolution |
+| L4: Decision Spine | ✅ Live | Event schema, spine writer, trade lifecycle tracking |
+| Heartbeat Protocol | ✅ Live | Periodic wake-up, crash recovery, scan scheduling |
+| Soul Architecture | ✅ Live | Constitution + Identity + Role separation (~950 tokens) |
+| Signal Connectors | 🔧 Partial | Polymarket WS, RSS news feeds (8 sources) |
+| Strategy Modules | 🔧 Partial | 4 strategies with self-evolving weight system |
+| Eval / Calibration | 🔧 Partial | 203K market calibration dataset, strategy win tracking |
+| Policy Engine (Ma'at) | 📐 Spec | Declarative rules, veto authority, risk gating |
+| Signal Router | 📐 Spec | Condition-level batching, dedup, fan-out |
+| Scribe | 📐 Spec | Deterministic outcome reconciliation |
+| Local Brain Index | 📐 Spec | SQLite + FAISS + FTS5 replacement for Cognee |
+| Tool Gateway | 📐 Spec | Centralised secrets, allowlists, circuit breakers |
 
-Angus (the agent running this system) was born February 11, 2026. Named after a piece from the Sheeple art series inscribed on Bitcoin Ordinals.
+### Local Brain Index (Next Major Build)
+
+Replacing Cognee with a fully local, deterministic cognition layer:
+
+- **SQLite** for truth (documents, chunks, links)
+- **FAISS** for vector recall
+- **FTS5** for lexical search
+- **RRF fusion** for hybrid retrieval
+- **Cross-encoder reranker** for reasoning alignment
+- **Canon-aware ranking** — exploit existing folder structure instead of rediscovering it
+- **Temporal memory model** — 45-day half-life with foundation anchoring
+
+---
 
 ## Stack
 
-- **Agent Runtime:** [OpenClaw](https://github.com/openclaw/openclaw)
-- **L1 (Conscious):** [Obsidian](https://obsidian.md) (plain markdown vault)
-- **L2 (Subconscious):** [Cognee](https://github.com/topoteretes/cognee) (semantic search + knowledge graph)
-- **L3 (Long-term):** Git (version control)
-- **Local Models:** Ollama (DeepSeek, Qwen) for infrastructure tasks
-- **Cloud Models:** Anthropic Claude for heavy reasoning
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Agent Runtime | [OpenClaw](https://github.com/openclaw/openclaw) | Orchestration, heartbeat, tool execution |
+| L1 (Conscious) | [Obsidian](https://obsidian.md) | Plain markdown vault with bidirectional links |
+| L2 (Subconscious) | [Cognee](https://github.com/topoteretes/cognee) | Semantic search + knowledge graph |
+| L3 (Long-term) | [Git](https://git-scm.com) | Version control, diffable reasoning |
+| L4 (Operational) | Custom ([schema](spine/schema/decision_event.schema.json)) | Append-only decision event log |
+| Local Models | [Ollama](https://ollama.ai) | Infrastructure tasks (DeepSeek, Qwen) |
+| Cloud Models | [Anthropic Claude](https://anthropic.com) | Heavy reasoning |
+| Embeddings | [Sentence Transformers](https://www.sbert.net/) | Local semantic embeddings |
 
-## Status
+---
 
-🟢 **In production** — Running daily since Feb 11, 2026
-📈 **Growing** — Knowledge graph expanding with every heartbeat cycle
-🔧 **Evolving** — Architecture refined through real failures and recoveries
+## Key Principles
+
+1. **Think first, task second** — Resume your train of thought before grinding
+2. **No tool call without `decision_id`** — The institutional invariant
+3. **Events are immutable** — Never rewrite the spine
+4. **Constitution beats identity** — Safety and evidence override personality
+5. **Measure, don't claim** — If you can't show the calibration curve, don't say "learning"
+6. **One agent with a good brain beats six agents with no memory**
+
+---
+
+## Origin Story
+
+This architecture emerged from failure. A previous 6-agent system ("The Castle") crashed from cascading failures — rate limit exhaustion, provider bugs, zombie sessions. The lesson: **simplicity wins.** One agent with persistent memory and institutional discipline beats a fleet of amnesiac agents.
+
+---
 
 ## Contributing
 
-This is a living document. If you're building persistent agent memory, we want to hear from you.
+Fork it. Break it. Tell me what's wrong.
+
+If you're building persistent agent memory, open an issue or PR. All critique is welcome.
 
 ## License
 
 MIT
-
----
-
-*"A quant who doesn't reflect on yesterday's errors will repeat them today."*
