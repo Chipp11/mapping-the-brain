@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Chipp11/mapping-the-brain/spine/schema/decision_event.schema.json",
+  "title": "Decision Event",
+  "description": "Append-only event for the L4 Decision Spine. Every agent action traces back to a decision. Every decision traces back to reasoning. Every outcome traces back to an action.",
+  "type": "object",
+  "required": ["event_id", "decision_id", "event_type", "timestamp", "agent"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this event. Never reused."
+    },
+    "decision_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Groups all events belonging to a single decision lifecycle. Shared across Proposed → Checked → Dispatched → Executed → Outcome."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "DecisionProposed",
+        "PolicyChecked",
+        "ActionDispatched",
+        "ActionExecuted",
+        "ActionFailed",
+        "OutcomeObserved"
+      ],
+      "description": "The lifecycle stage of this event."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp. When this event was emitted."
+    },
+    "agent": {
+      "type": "string",
+      "description": "Which agent or component emitted this event.",
+      "examples": ["angus", "maat", "scribe", "tool_gateway"]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event-type-specific data. See oneOf definitions below."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "event_type": { "const": "DecisionProposed" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["hypothesis", "confidence", "chosen_action"],
+            "properties": {
+              "trigger": { "type": "string", "description": "What initiated this decision." },
+              "inputs": {
+                "type": "array",
+                "description": "Data sources consulted before deciding.",
+                "items": {
+                  "type": "object",
+                  "required": ["source"],
+                  "properties": {
+                    "source": { "type": "string", "examples": ["cognee_retrieval", "polymarket_api", "canon_thinking_note"] },
+                    "query": { "type": "string" },
+                    "data_hash": { "type": "string" },
+                    "summary": { "type": "string" },
+                    "staleness_seconds": { "type": "integer" }
+                  }
+                }
+              },
+              "hypothesis": { "type": "string", "description": "What the agent believes. The core reasoning." },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Agent's stated confidence. This gets calibrated against outcomes." },
+              "alternatives_considered": { "type": "array", "items": { "type": "string" }, "description": "Other actions considered and why rejected." },
+              "chosen_action": { "type": "string", "examples": ["place_trade", "hold", "alert_human", "delegate", "gather_more_data"] },
+              "parameters": { "type": "object", "description": "Action-specific details." },
+              "pre_mortem": { "type": "string", "description": "What could go wrong. Written before execution, not after." },
+              "canon_note_ref": { "type": "string", "description": "Path to the L1 thinking note, e.g. Canon/THINKING/2026-02-19-hypothesis.md" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "PolicyChecked" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["passed", "rules_evaluated"],
+            "properties": {
+              "passed": { "type": "boolean" },
+              "rules_evaluated": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["rule_id", "result"],
+                  "properties": {
+                    "rule_id": { "type": "string", "examples": ["max_position_size", "staleness_threshold", "confidence_floor"] },
+                    "result": { "type": "string", "enum": ["pass", "fail", "warn", "skip"] },
+                    "detail": { "type": "string" }
+                  }
+                }
+              },
+              "veto_reason": { "type": "string" },
+              "override_by": { "type": "string", "description": "If a human overrode a veto. This override is itself auditable." }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "ActionDispatched" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["tool", "parameters"],
+            "properties": {
+              "tool": { "type": "string", "examples": ["polymarket_trade", "binance_order", "slack_alert"] },
+              "parameters": { "type": "object", "description": "Exact parameters sent. Secrets redacted." },
+              "gateway_request_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "ActionExecuted" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["success"],
+            "properties": {
+              "success": { "type": "boolean" },
+              "result": { "type": "object" },
+              "latency_ms": { "type": "integer" },
+              "gateway_request_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "ActionFailed" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["error_type"],
+            "properties": {
+              "error_type": { "type": "string", "examples": ["rate_limited", "timeout", "auth_failure", "circuit_breaker_open"] },
+              "error_detail": { "type": "string" },
+              "retryable": { "type": "boolean" },
+              "retry_count": { "type": "integer" },
+              "gateway_request_id": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "event_type": { "const": "OutcomeObserved" } } },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "required": ["resolution"],
+            "properties": {
+              "resolution": { "type": "string", "description": "What actually happened." },
+              "resolution_source": { "type": "string", "examples": ["polymarket_api", "binance_api", "manual_entry"] },
+              "resolution_timestamp": { "type": "string", "format": "date-time" },
+              "pnl": { "type": "number" },
+              "pnl_currency": { "type": "string", "examples": ["sats", "USD", "USDC"] },
+              "hypothesis_correct": { "type": "boolean", "description": "Did the hypothesis hold? This is what calibration curves are built from." }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
