@@ -364,3 +364,19 @@ Each step is independently useful. Each step makes the next one easier.
 ---
 
 *"An institution is just a decision spine with a soul attached."*
+
+---
+
+## Appendix: Staleness as a First-Class Concern
+
+Every input to a decision carries a `staleness_seconds` field. This is **required**, not optional.
+
+Why: Stale data driving confident decisions is how you blow up. A 95% confidence call based on 30-minute-old market data is not a 95% confidence call — it's a guess wearing a suit.
+
+**Rules:**
+- Every `inputs[]` entry in `DecisionProposed` must include `staleness_seconds`
+- Policy can reject decisions where any input exceeds a staleness threshold
+- The agent must compute staleness at decision time, not at data fetch time
+- If staleness cannot be determined, set to `-1` and document why
+
+This is not bureaucracy. This is the difference between "I checked the price" and "I checked the price 47 seconds ago."
