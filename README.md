@@ -97,7 +97,21 @@ See [spine/](spine/) for the schema and implementation.
 
 ## The Heartbeat Protocol
 
-The agent runs on a heartbeat loop — waking up periodically, reconnecting to its brain, and continuing work:
+Two versions — start lite, graduate to full:
+
+### Lite Heartbeat (Recommended Start) — [HEARTBEAT-LITE.md](heartbeat/HEARTBEAT-LITE.md)
+
+Runs on a **local model** (DeepSeek, Qwen, Llama via [Ollama](https://ollama.ai)). Costs $0.00 per cycle.
+
+```
+Read WORK_QUEUE.md → anything urgent? → HEARTBEAT_OK or do one thing → stop
+```
+
+Max 3 tool calls. Never spawns sub-agents. Never runs scanners. If anything fails, replies HEARTBEAT_OK and waits for next cycle. This is what we run in production.
+
+### Full Brain Loop (Advanced) — [HEARTBEAT.md](heartbeat/HEARTBEAT.md)
+
+For agents with dedicated cloud resources and stable infrastructure:
 
 1. **Rate limit self-check** — Don't burn resources
 2. **Wake up** — Query Cognee, read last thinking note, check work queue
@@ -107,7 +121,7 @@ The agent runs on a heartbeat loop — waking up periodically, reconnecting to i
 6. **Ingest** — Feed new notes to Cognee
 7. **Report or stay silent** — Only speak when there's something worth saying
 
-See [heartbeat/HEARTBEAT.md](heartbeat/HEARTBEAT.md) for the full protocol.
+**Why two versions?** We learned the hard way that a heavy heartbeat on a cloud model can burn through a month of API credits in minutes if anything goes wrong. Start lite. Graduate when your infrastructure is stable.
 
 ---
 
